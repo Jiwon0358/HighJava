@@ -1,5 +1,17 @@
 ﻿package javaIOTest;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -17,7 +29,7 @@ public class PhoneBookTest {
 	 * 			1) '6.전화번호저장' 메뉴를 추가하고 구현한다.
 	 * 				(저장파일명 : 'phoneData.dat'로 한다.)
 	 * 			2) 프로그램이 시작될 때 저장된 파일이 있으면 그 데이터를 읽어와 Map에 셋팅한다.
-	 * 			3) 프로그램을 종료할 때 Map의 데이터가 변경되었거나 추가 또는 삭제 되면 새로 저장한 수 종료되도록한다.
+	 * 			3) 프로그램을 종료할 때 Map의 데이터가 변경되었거나 추가 또는 삭제 되면 새로 저장한 후 종료되도록한다.
 	 * 
 	 * 실행예시)
 	 *  다음 메뉴를 선택하세요.
@@ -51,10 +63,49 @@ public class PhoneBookTest {
 	 *  =======================================
 	 *  출력완료...
 	 */
+	
 	static Scanner sc = new Scanner(System.in);
+	
+	
 	static HashMap<String, Phone> phoneList = new HashMap<>();
 	
 	public static void main(String[] args) {
+		//파일 읽어와 저장하기
+		
+		ObjectInputStream oin = null;
+		File file = new File("d:/d_other/PhoneBook/phoneData.dat");
+		if(file.isFile() == true){
+		try {
+			System.out.println("전화번호부 셋팅중");
+			oin = new ObjectInputStream(new BufferedInputStream(new FileInputStream(file)));
+			
+			Object obj;//읽어온 객체를 저장할 변수
+			
+			while((obj = oin.readObject()) != null){
+				Phone phone = (Phone)obj;
+				phoneList.put(phone.getName(), phone);
+			}
+		
+		} catch (EOFException e) {
+			System.out.println("전화번호부 셋팅완료!");
+			System.out.println();
+			System.out.println();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally{
+			try {
+				oin.close();
+			} catch (IOException e2) {
+				// TODO: handle exception
+			}
+		}
+		}
 		
 	while(true){
 		System.out.println("====================");
@@ -87,16 +138,41 @@ public class PhoneBookTest {
 		case 5:
 			listOutPut();
 			break;
+		case 6:
+			saveForm();
+			break;
 		case 0:
-			System.out.println("프로그램을 종료합니다");
+			saveForm();
+			System.out.println("전화번호부 저장 완료 후 프로그램을 종료합니다");
 			System.exit(0);
 		}
 	}
+	}
 		
 		
-		
-		
-		
+
+	private static void saveForm() {
+		try {
+			//객체를 파일에 저장하기
+			FileOutputStream fout = new FileOutputStream("d:/d_other/PhoneBook/phoneData.dat");
+			//입출력의 성능 향상을 위해서  Buffered스트림을 사용한다.
+			BufferedOutputStream bout = new BufferedOutputStream(fout);
+			ObjectOutputStream oout = new ObjectOutputStream(bout);
+			
+			//쓰기작업 수행
+			System.out.println("전화번호부 저장 시작");
+			
+			for(String userName : phoneList.keySet()){
+			Phone user = phoneList.get(userName);
+			oout.writeObject(user);
+			}
+			System.out.println("전화번호부 저장 완료");
+			
+			oout.close();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private static void listOutPut() {
@@ -226,11 +302,17 @@ public class PhoneBookTest {
 
 }
 }
-class Phone{
+class Phone implements Serializable{
+	
+	private static final long serialVersionUID = 3744605591369418249L;
 	private String name;
 	private String hp;
 	private String age;
 	private String address;
+	
+	
+	
+	
 	
 	public Phone(String name, String hp, String age, String address) {
 		super();
