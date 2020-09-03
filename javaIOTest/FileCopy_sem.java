@@ -60,9 +60,9 @@ public class FileCopy_sem {
 			
 			//버퍼 스트림을 이용한 복사
 			while((data = bin.read(temp)) != -1){
-				bout.write(data);
+				bout.write(temp,0,data);
 			}
-			bout.flush();
+			bout.flush();//버퍼를 사용했을 때 마지막에 버퍼가 차지 않았어도 강제로 출력
 			System.out.println("복사가 끝났습니다.");
 			
 			bin.close();
